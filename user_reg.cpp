@@ -19,14 +19,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 11727 $ $Date:: 2019-06-10 #$ $Author: serge $
+// $Revision: 11743 $ $Date:: 2019-06-13 #$ $Author: serge $
 
 #include "user_reg.h"                   // self
 
 #include "utils/mutex_helper.h"         // MUTEX_SCOPE_LOCK
 #include "utils/dummy_logger.h"         // dummy_log
 #include "utils/utils_assert.h"         // ASSERT
-#include "utils/chrono_epoch.h"         // to_epoch()
+#include "utils/get_now_epoch.h"        // utils::get_now_epoch()
+#include "utils/gen_uuid.h"             // utils::gen_uuid
 
 
 #define MODULENAME      "UserReg"
@@ -44,7 +45,8 @@ UserReg::~UserReg()
 }
 
 bool UserReg::init(
-        user_manager::UserManager * user_manager )
+        const Config                & config,
+        user_manager::UserManager   * user_manager )
 {
     assert( user_manager );
 
@@ -52,6 +54,7 @@ bool UserReg::init(
 
     dummy_log_info( MODULENAME, "init: not ready yet" );
 
+    config_         = config;
     user_manager_   = user_manager;
 
     return false;
@@ -59,7 +62,7 @@ bool UserReg::init(
 
 bool UserReg::register_new_user(
         user_manager::group_id_t    group_id,
-        const std::string           & enail,
+        const std::string           & email,
         const std::string           & password_hash,
         user_manager::user_id_t     * user_id,
         std::string                 * error_msg )
@@ -70,7 +73,30 @@ bool UserReg::register_new_user(
 
     dummy_log_info( MODULENAME, "register_new_user: not ready yet" );
 
-    return false;
+    auto b = user_manager_->create_and_add_user( group_id, email, password_hash, user_id, error_msg );
+
+    if( b == false )
+    {
+        dummy_log_error( MODULENAME, "register_new_user: cannot add new user: %s", error_msg->c_str() );
+        return false;
+    }
+
+    auto uuid       = utils::gen_uuid();
+    auto expiration = utils::get_now_epoch() + config_.expiration_days * 24 * 60 * 60;
+
+    auto & mutex = user_manager_->get_mutex();
+
+    MUTEX_SCOPE_LOCK( mutex );
+
+    auto user   = user_manager_->find__unlocked( * user_id );
+
+    user->add_field( user_manager::User::STATUS,                    int( user_manager::status_e::WAITING_CONFIRMATION ) );
+    user->add_field( user_manager::User::CONFIRMATION_UUID,         uuid );
+    user->add_field( user_manager::User::CONFIRMATION_EXPIRATION,   int( expiration ) );
+
+    dummy_log_info( MODULENAME, "register_new_user: id %u, uuid %s, expiration %u", * user_id, uuid.c_str(), expiration );
+
+    return true;
 }
 
 bool UserReg::confirm_registration(

@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 11727 $ $Date:: 2019-06-10 #$ $Author: serge $
+// $Revision: 11743 $ $Date:: 2019-06-13 #$ $Author: serge $
 
 #ifndef USER_REG__USER_REG_H
 #define USER_REG__USER_REG_H
@@ -32,6 +32,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 namespace user_reg
 {
 
+struct Config
+{
+    uint32_t    expiration_days;
+};
+
 class UserReg
 {
 
@@ -41,11 +46,12 @@ public:
     ~UserReg();
 
     bool init(
-            user_manager::UserManager * user_manager );
+            const Config                & config,
+            user_manager::UserManager   * user_manager );
 
     bool register_new_user(
             user_manager::group_id_t    group_id,
-            const std::string           & enail,
+            const std::string           & email,
             const std::string           & password_hash,
             user_manager::user_id_t     * user_id,
             std::string                 * error_msg );
@@ -63,6 +69,7 @@ private:
 private:
     mutable std::mutex          mutex_;
 
+    Config                      config_;
     user_manager::UserManager   * user_manager_;
 };
 
