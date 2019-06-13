@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 11743 $ $Date:: 2019-06-13 #$ $Author: serge $
+// $Revision: 11746 $ $Date:: 2019-06-14 #$ $Author: serge $
 
 #ifndef USER_REG__USER_REG_H
 #define USER_REG__USER_REG_H
@@ -54,6 +54,7 @@ public:
             const std::string           & email,
             const std::string           & password_hash,
             user_manager::user_id_t     * user_id,
+            std::string                 * key,
             std::string                 * error_msg );
 
     bool confirm_registration(
@@ -62,15 +63,27 @@ public:
 
 private:
 
-    void remove_expired();
+    struct UserStatus
+    {
+        user_manager::user_id_t     user_id;
+        utils::epoch32_t            expiration;
+    };
+
+    typedef std::map<std::string,UserStatus>    MapKeyToUserStatus;
 
 private:
+
+    void remove_expired();
+    void add_to_map( user_manager::user_id_t user_id, const std::string & key, utils::epoch32_t expiration );
+    void update_user( user_manager::user_id_t user_id, const std::string & key, utils::epoch32_t expiration );
 
 private:
     mutable std::mutex          mutex_;
 
     Config                      config_;
     user_manager::UserManager   * user_manager_;
+
+    MapKeyToUserStatus          map_key_to_user_status_;
 };
 
 } // namespace user_reg
