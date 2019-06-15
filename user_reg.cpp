@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 11749 $ $Date:: 2019-06-14 #$ $Author: serge $
+// $Revision: 11752 $ $Date:: 2019-06-14 #$ $Author: serge $
 
 #include "user_reg.h"                   // self
 
@@ -87,7 +87,7 @@ bool UserReg::register_new_user(
     * key           = utils::gen_uuid();
     auto expiration = utils::get_now_epoch() + config_.expiration_days * 24 * 60 * 60;
 
-    add_to_map( * user_id, * key, expiration );
+    add_to_map( * key, * user_id, expiration );
     update_user( * user_id, * key, expiration );
 
     dummy_log_info( MODULENAME, "register_new_user: id %u, key %s, expiration %u", * user_id, key->c_str(), expiration );
@@ -99,11 +99,33 @@ bool UserReg::confirm_registration(
         const std::string           & key,
         std::string                 * error_msg )
 {
+    dummy_log_trace( MODULENAME, "confirm_registration: key %s", key.c_str() );
+
     MUTEX_SCOPE_LOCK( mutex_ );
 
     remove_expired();
 
-    dummy_log_info( MODULENAME, "confirm_registration: not ready yet" );
+    auto it = map_key_to_user_status_.find( key );
+
+    if( it == map_key_to_user_status_.end() )
+    {
+        * error_msg = "invalid or expired key";
+        dummy_log_debug( MODULENAME, "confirm_registration: key %s - not found", key.c_str() );
+        return false;
+    }
+
+    auto user_id = it->second.user_id;
+
+    map_key_to_user_status_.erase( it );
+
+    std::string error_msg_2;
+    if( confirm_registration( user_id, & error_msg_2 ) == false )
+    {
+        * error_msg = "failed to change user's state: " + error_msg_2;
+        return false;
+    }
+
+    dummy_log_info( MODULENAME, "confirm_registration: user id %u - confirmed", user_id );
 
     return false;
 }
@@ -141,7 +163,7 @@ void UserReg::remove_expired()
     dummy_log_debug( MODULENAME, "remove_expired: expired %u key(s)", expired_keys.size() );
 }
 
-void UserReg::add_to_map( user_manager::user_id_t user_id, const std::string & key, utils::epoch32_t expiration )
+void UserReg::add_to_map( const std::string & key, user_manager::user_id_t user_id, utils::epoch32_t expiration )
 {
     UserStatus us   = { user_id, expiration };
 
@@ -161,6 +183,25 @@ void UserReg::update_user( user_manager::user_id_t user_id, const std::string & 
     user->add_field( user_manager::User::STATUS,                    int( user_manager::status_e::WAITING_CONFIRMATION ) );
     user->add_field( user_manager::User::CONFIRMATION_KEY,          key );
     user->add_field( user_manager::User::CONFIRMATION_EXPIRATION,   int( expiration ) );
+}
+
+bool UserReg::confirm_registration( user_manager::user_id_t user_id, std::string * error_msg )
+{
+    auto & mutex = user_manager_->get_mutex();
+
+    MUTEX_SCOPE_LOCK( mutex );
+
+    auto user   = user_manager_->find__unlocked( user_id );
+
+    if( user == nullptr )
+    {
+        * error_msg = "user id " + std::to_string( user_id ) + " not found";
+        return false;
+    }
+
+    user->add_field( user_manager::User::STATUS,                    int( user_manager::status_e::WAITING_CONFIRMATION ) );
+    user->delete_field( user_manager::User::CONFIRMATION_KEY );
+    user->delete_field( user_manager::User::CONFIRMATION_EXPIRATION );
 }
 
 } // namespace user_reg

@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 11746 $ $Date:: 2019-06-14 #$ $Author: serge $
+// $Revision: 11751 $ $Date:: 2019-06-14 #$ $Author: serge $
 
 #ifndef USER_REG__USER_REG_H
 #define USER_REG__USER_REG_H
@@ -74,8 +74,9 @@ private:
 private:
 
     void remove_expired();
-    void add_to_map( user_manager::user_id_t user_id, const std::string & key, utils::epoch32_t expiration );
+    void add_to_map( const std::string & key, user_manager::user_id_t user_id, utils::epoch32_t expiration );
     void update_user( user_manager::user_id_t user_id, const std::string & key, utils::epoch32_t expiration );
+    bool confirm_registration( user_manager::user_id_t user_id, std::string * error_msg );
 
 private:
     mutable std::mutex          mutex_;
