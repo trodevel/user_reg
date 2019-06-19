@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 11752 $ $Date:: 2019-06-14 #$ $Author: serge $
+// $Revision: 11753 $ $Date:: 2019-06-17 #$ $Author: serge $
 
 #include "user_reg.h"                   // self
 
@@ -199,9 +199,27 @@ bool UserReg::confirm_registration( user_manager::user_id_t user_id, std::string
         return false;
     }
 
-    user->add_field( user_manager::User::STATUS,                    int( user_manager::status_e::WAITING_CONFIRMATION ) );
+    if( user->is_open == false )
+    {
+        * error_msg = "user id " + std::to_string( user_id ) + " is deleted";
+        return false;
+    }
+
+    auto status_v = user->get_field( user_manager::User::STATUS );
+
+    auto status  = static_cast<user_manager::status_e>( status_v );
+
+    if( status != user_manager::status_e::WAITING_CONFIRMATION )
+    {
+        * error_msg = "user id " + std::to_string( user_id ) + " doesn't require confirmation";
+        return false;
+    }
+
+    user->update_field( user_manager::User::STATUS,                     int( user_manager::status_e::ACTIVE ) );
     user->delete_field( user_manager::User::CONFIRMATION_KEY );
     user->delete_field( user_manager::User::CONFIRMATION_EXPIRATION );
+
+    return true;
 }
 
 } // namespace user_reg
