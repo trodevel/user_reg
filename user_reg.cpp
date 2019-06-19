@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 11753 $ $Date:: 2019-06-17 #$ $Author: serge $
+// $Revision: 11764 $ $Date:: 2019-06-19 #$ $Author: serge $
 
 #include "user_reg.h"                   // self
 
@@ -59,14 +59,14 @@ bool UserReg::init(
     config_         = config;
     user_manager_   = user_manager;
 
-    return false;
+    return init_key_to_user_status();
 }
 
 bool UserReg::register_new_user(
         user_manager::group_id_t    group_id,
         const std::string           & email,
         const std::string           & password_hash,
-        user_manager::user_id_t     * user_id,
+        user_id_t                   * user_id,
         std::string                 * key,
         std::string                 * error_msg )
 {
@@ -130,40 +130,50 @@ bool UserReg::confirm_registration(
     return false;
 }
 
-void UserReg::remove_expired()
+void UserReg::collect_expired( SetKeyUserId * expired_keys, utils::epoch32_t now )
 {
-    std::set<std::string> expired_keys;
-
-    auto now = utils::get_now_epoch();
-
     for( auto & e : map_key_to_user_status_ )
     {
         if( now > e.second.expiration )
         {
-            auto b = expired_keys.insert( e.first ).second;
+            auto b = expired_keys->insert( std::make_pair(e.first, e.second.user_id) ).second;
 
             assert( b );
-
-            std::string error_msg;
-
-            b = user_manager_->delete_user( e.second.user_id, & error_msg );
-
-            if( b == false )
-            {
-                dummy_log_error( MODULENAME, "remove_expired: cannot delete user id %u: %s", e.second.user_id, error_msg.c_str() );
-            }
         }
     }
+}
 
+void UserReg::remove_expired( const SetKeyUserId & expired_keys )
+{
     for( auto & e : expired_keys )
     {
-        map_key_to_user_status_.erase( e );
+        map_key_to_user_status_.erase( e.first );
+
+        std::string error_msg;
+
+        auto b = user_manager_->delete_user( e.second, & error_msg );
+
+        if( b == false )
+        {
+            dummy_log_error( MODULENAME, "remove_expired: cannot delete user id %u: %s", e.second, error_msg.c_str() );
+        }
     }
 
     dummy_log_debug( MODULENAME, "remove_expired: expired %u key(s)", expired_keys.size() );
 }
 
-void UserReg::add_to_map( const std::string & key, user_manager::user_id_t user_id, utils::epoch32_t expiration )
+void UserReg::remove_expired()
+{
+    SetKeyUserId expired_keys;
+
+    auto now = utils::get_now_epoch();
+
+    collect_expired( & expired_keys, now );
+
+    remove_expired( expired_keys );
+}
+
+void UserReg::add_to_map( const std::string & key, user_id_t user_id, utils::epoch32_t expiration )
 {
     UserStatus us   = { user_id, expiration };
 
@@ -172,7 +182,7 @@ void UserReg::add_to_map( const std::string & key, user_manager::user_id_t user_
     assert( b );
 }
 
-void UserReg::update_user( user_manager::user_id_t user_id, const std::string & key, utils::epoch32_t expiration )
+void UserReg::update_user( user_id_t user_id, const std::string & key, utils::epoch32_t expiration )
 {
     auto & mutex = user_manager_->get_mutex();
 
@@ -185,7 +195,7 @@ void UserReg::update_user( user_manager::user_id_t user_id, const std::string & 
     user->add_field( user_manager::User::CONFIRMATION_EXPIRATION,   int( expiration ) );
 }
 
-bool UserReg::confirm_registration( user_manager::user_id_t user_id, std::string * error_msg )
+bool UserReg::confirm_registration( user_id_t user_id, std::string * error_msg )
 {
     auto & mutex = user_manager_->get_mutex();
 
@@ -219,6 +229,31 @@ bool UserReg::confirm_registration( user_manager::user_id_t user_id, std::string
     user->delete_field( user_manager::User::CONFIRMATION_KEY );
     user->delete_field( user_manager::User::CONFIRMATION_EXPIRATION );
 
+    return true;
+}
+
+bool UserReg::init_key_to_user_status()
+{
+    static const anyvalue::Value v( int( user_manager::status_e::WAITING_CONFIRMATION ) );
+
+    auto & mutex = user_manager_->get_mutex();
+
+    MUTEX_SCOPE_LOCK( mutex );
+
+    auto users = user_manager_->select_users__unlocked( user_manager::User::STATUS, anyvalue::comparison_type_e::EQ, v );
+
+    dummy_log_debug( MODULENAME, "init_key_to_user_status: %u users are waiting for confirmation", users.size() );
+
+    for( auto & e: users )
+    {
+        init_key_to_user_status__one( * e );
+    }
+
+    return true;
+}
+
+bool UserReg::init_key_to_user_status__one( const user_manager::User & user )
+{
     return true;
 }
 

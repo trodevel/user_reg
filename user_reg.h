@@ -19,18 +19,21 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 11751 $ $Date:: 2019-06-14 #$ $Author: serge $
+// $Revision: 11764 $ $Date:: 2019-06-19 #$ $Author: serge $
 
 #ifndef USER_REG__USER_REG_H
 #define USER_REG__USER_REG_H
 
 #include <mutex>            // std::mutex
 #include <map>              // std::map
+#include <set>              // std::set
 
 #include "user_manager/user_manager.h"  // UserManager
 
 namespace user_reg
 {
+
+typedef user_manager::user_id_t user_id_t;
 
 struct Config
 {
@@ -53,7 +56,7 @@ public:
             user_manager::group_id_t    group_id,
             const std::string           & email,
             const std::string           & password_hash,
-            user_manager::user_id_t     * user_id,
+            user_id_t                   * user_id,
             std::string                 * key,
             std::string                 * error_msg );
 
@@ -65,18 +68,24 @@ private:
 
     struct UserStatus
     {
-        user_manager::user_id_t     user_id;
-        utils::epoch32_t            expiration;
+        user_id_t               user_id;
+        utils::epoch32_t        expiration;
     };
 
-    typedef std::map<std::string,UserStatus>    MapKeyToUserStatus;
+    typedef std::map<std::string,UserStatus>            MapKeyToUserStatus;
+    typedef std::set<std::pair<std::string,user_id_t>>  SetKeyUserId;
 
 private:
 
     void remove_expired();
-    void add_to_map( const std::string & key, user_manager::user_id_t user_id, utils::epoch32_t expiration );
-    void update_user( user_manager::user_id_t user_id, const std::string & key, utils::epoch32_t expiration );
-    bool confirm_registration( user_manager::user_id_t user_id, std::string * error_msg );
+    void collect_expired( SetKeyUserId * expired_keys, utils::epoch32_t now );
+    void remove_expired( const SetKeyUserId & expired_keys );
+    void add_to_map( const std::string & key, user_id_t user_id, utils::epoch32_t expiration );
+    void update_user( user_id_t user_id, const std::string & key, utils::epoch32_t expiration );
+    bool confirm_registration( user_id_t user_id, std::string * error_msg );
+
+    bool init_key_to_user_status();
+    bool init_key_to_user_status__one( const user_manager::User & user );
 
 private:
     mutable std::mutex          mutex_;
