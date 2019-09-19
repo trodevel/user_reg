@@ -19,14 +19,12 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 11764 $ $Date:: 2019-06-19 #$ $Author: serge $
+// $Revision: 12020 $ $Date:: 2019-09-19 #$ $Author: serge $
 
 #ifndef USER_REG__USER_REG_H
 #define USER_REG__USER_REG_H
 
 #include <mutex>            // std::mutex
-#include <map>              // std::map
-#include <set>              // std::set
 
 #include "user_manager/user_manager.h"  // UserManager
 
@@ -57,43 +55,23 @@ public:
             const std::string           & email,
             const std::string           & password_hash,
             user_id_t                   * user_id,
-            std::string                 * key,
+            std::string                 * registration_key,
             std::string                 * error_msg );
 
     bool confirm_registration(
-            const std::string           & key,
+            const std::string           & registration_key,
             std::string                 * error_msg );
-
-private:
-
-    struct UserStatus
-    {
-        user_id_t               user_id;
-        utils::epoch32_t        expiration;
-    };
-
-    typedef std::map<std::string,UserStatus>            MapKeyToUserStatus;
-    typedef std::set<std::pair<std::string,user_id_t>>  SetKeyUserId;
 
 private:
 
     void remove_expired();
-    void collect_expired( SetKeyUserId * expired_keys, utils::epoch32_t now );
-    void remove_expired( const SetKeyUserId & expired_keys );
-    void add_to_map( const std::string & key, user_id_t user_id, utils::epoch32_t expiration );
-    void update_user( user_id_t user_id, const std::string & key, utils::epoch32_t expiration );
-    bool confirm_registration( user_id_t user_id, std::string * error_msg );
-
-    bool init_key_to_user_status();
-    bool init_key_to_user_status__one( const user_manager::User & user );
+    void update_user( user_id_t user_id, utils::epoch32_t expiration );
 
 private:
     mutable std::mutex          mutex_;
 
     Config                      config_;
     user_manager::UserManager   * user_manager_;
-
-    MapKeyToUserStatus          map_key_to_user_status_;
 };
 
 } // namespace user_reg
