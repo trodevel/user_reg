@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 12020 $ $Date:: 2019-09-19 #$ $Author: serge $
+// $Revision: 12028 $ $Date:: 2019-09-24 #$ $Author: serge $
 
 #ifndef USER_REG__USER_REG_H
 #define USER_REG__USER_REG_H
@@ -62,6 +62,8 @@ public:
             const std::string           & registration_key,
             std::string                 * error_msg );
 
+    void set_speedup_factor( uint32_t factor );
+
 private:
 
     void remove_expired();
@@ -72,6 +74,10 @@ private:
 
     Config                      config_;
     user_manager::UserManager   * user_manager_;
+
+#ifdef DEBUG
+    uint32_t                    speedup_factor_;
+#endif
 };
 
 } // namespace user_reg

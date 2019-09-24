@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 12023 $ $Date:: 2019-09-19 #$ $Author: serge $
+// $Revision: 12028 $ $Date:: 2019-09-24 #$ $Author: serge $
 
 #include "user_reg.h"                   // self
 
@@ -39,6 +39,9 @@ namespace user_reg
 
 UserReg::UserReg():
         user_manager_( nullptr )
+#ifdef DEBUG
+, speedup_factor_( 1 )
+#endif
 {
 }
 
@@ -82,7 +85,11 @@ bool UserReg::register_new_user(
         return false;
     }
 
-    auto expiration = utils::get_now_epoch() + config_.expiration_days * 24 * 60 * 60;
+    auto expiration = utils::get_now_epoch() + config_.expiration_days * 24 * 60 * 60
+#ifdef DEBUG
+            / speedup_factor_
+#endif
+            ;
 
     update_user( * user_id, expiration );
 
@@ -139,6 +146,14 @@ bool UserReg::confirm_registration(
     dummy_log_info( MODULENAME, "confirm_registration: user id %u - confirmed registration", user_id );
 
     return false;
+}
+
+
+void UserReg::set_speedup_factor( uint32_t factor )
+{
+#ifdef DEBUG
+    speedup_factor_ = factor;
+#endif
 }
 
 void UserReg::remove_expired()
