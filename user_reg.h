@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 12028 $ $Date:: 2019-09-24 #$ $Author: serge $
+// $Revision: 12037 $ $Date:: 2019-09-25 #$ $Author: serge $
 
 #ifndef USER_REG__USER_REG_H
 #define USER_REG__USER_REG_H
@@ -75,9 +75,9 @@ private:
     Config                      config_;
     user_manager::UserManager   * user_manager_;
 
-#ifdef DEBUG
+//#ifdef DEBUG
     uint32_t                    speedup_factor_;
-#endif
+//#endif
 };
 
 } // namespace user_reg

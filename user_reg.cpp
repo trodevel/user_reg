@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 12028 $ $Date:: 2019-09-24 #$ $Author: serge $
+// $Revision: 12043 $ $Date:: 2019-09-25 #$ $Author: serge $
 
 #include "user_reg.h"                   // self
 
@@ -33,6 +33,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include "utils/epoch_to_string.h"      // utils::epoch_to_string
 
 #define MODULENAME      "UserReg"
+
+#define DEBUG
 
 namespace user_reg
 {
@@ -108,12 +110,12 @@ bool UserReg::confirm_registration(
 
     remove_expired();
 
-    auto user   = user_manager_->find__unlocked( registration_key );
+    auto user   = user_manager_->find_regkey__unlocked( registration_key );
 
     if( user.is_empty() )
     {
         * error_msg = "invalid or expired registration_key";
-        dummy_log_debug( MODULENAME, "confirm_registration: registration_key %s - not found", registration_key.c_str() );
+        dummy_log_info( MODULENAME, "confirm_registration: registration_key %s - not found", registration_key.c_str() );
         return false;
     }
 
@@ -145,13 +147,15 @@ bool UserReg::confirm_registration(
 
     dummy_log_info( MODULENAME, "confirm_registration: user id %u - confirmed registration", user_id );
 
-    return false;
+    return true;
 }
 
 
 void UserReg::set_speedup_factor( uint32_t factor )
 {
 #ifdef DEBUG
+    dummy_log_debug( MODULENAME, "set_speedup_factor: %u", factor );
+
     speedup_factor_ = factor;
 #endif
 }
