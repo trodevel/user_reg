@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 12037 $ $Date:: 2019-09-25 #$ $Author: serge $
+// $Revision: 12149 $ $Date:: 2019-10-10 #$ $Author: serge $
 
 #ifndef USER_REG__USER_REG_H
 #define USER_REG__USER_REG_H
@@ -31,7 +31,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 namespace user_reg
 {
 
-typedef user_manager::user_id_t user_id_t;
+using user_id_t = user_manager::user_id_t;
+using group_id_t = user_manager::group_id_t;
 
 struct Config
 {
