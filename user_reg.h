@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 12149 $ $Date:: 2019-10-10 #$ $Author: serge $
+// $Revision: 12173 $ $Date:: 2019-10-15 #$ $Author: serge $
 
 #ifndef USER_REG__USER_REG_H
 #define USER_REG__USER_REG_H
@@ -27,17 +27,13 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 #include <mutex>            // std::mutex
 
 #include "user_manager/user_manager.h"  // UserManager
+#include "config.h"         // Config
 
 namespace user_reg
 {
 
 using user_id_t = user_manager::user_id_t;
 using group_id_t = user_manager::group_id_t;
-
-struct Config
-{
-    uint32_t    expiration_days;
-};
 
 class UserReg
 {
