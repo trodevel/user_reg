@@ -6,6 +6,7 @@
 #include "utils/dummy_logger.h" // dummy_logger::set_log_level
 #include "utils/log_test.h"     // log_test
 #include "utils/mutex_helper.h" // THIS_THREAD_SLEEP_SEC
+#include "config_reader/config_reader.h"    // config_reader::ConfigReader
 
 void dump_selection( const std::vector<user_manager::User> & vec, const std::string & comment )
 {
@@ -254,6 +255,37 @@ void test_05_show_pending_ok_3()
     log_test( "test_05_show_pending_ok_3", b, res.size() == 1, "all pending users were found", "not all pending users were found", error_msg );
 }
 
+void test_06_read_config()
+{
+    bool res = false;
+    std::string error_msg;
+
+    try
+    {
+        std::string config_file( "config_dummy.ini" );
+
+        config_reader::ConfigReader cr;
+
+        user_manager::UserManager   um;
+        user_reg::UserReg ur;
+
+        um.init();
+        cr.init( config_file );
+
+        user_reg::Config config;
+
+        ur.init( config, & um );
+
+        res = true;
+    }
+    catch( std::exception & e )
+    {
+        error_msg   = e.what();
+    }
+
+    log_test( "test_06_read_config", res, true, "config read successfully", "cannot read", error_msg );
+}
+
 int main()
 {
     dummy_logger::set_log_level( log_levels_log4j::Debug );
@@ -268,6 +300,7 @@ int main()
     test_05_show_pending_ok_1();
     test_05_show_pending_ok_2();
     test_05_show_pending_ok_3();
+    test_06_read_config();
 
     return EXIT_SUCCESS;
 }
