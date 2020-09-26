@@ -19,7 +19,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 */
 
-// $Revision: 12173 $ $Date:: 2019-10-15 #$ $Author: serge $
+// $Revision: 13849 $ $Date:: 2020-09-26 #$ $Author: serge $
 
 #ifndef USER_REG__USER_REG_H
 #define USER_REG__USER_REG_H

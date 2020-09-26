@@ -1,8 +1,8 @@
 /*
 
-User Reg.
+Init Config.
 
-Copyright (C) 2019 Sergey Kolevatov
+Copyright (C) 2020 Sergey Kolevatov
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,19 +21,16 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 // $Revision: 13849 $ $Date:: 2020-09-26 #$ $Author: serge $
 
-#ifndef USER_REG__CONFIG_H
-#define USER_REG__CONFIG_H
+#include "init_config.h"       // self
 
-#include <cstdint>
+#include "config_reader/get_value.h"
 
 namespace user_reg
 {
 
-struct Config
+void init_config( Config * cfg, const std::string & section_name, const config_reader::ConfigReader & cr )
 {
-    uint32_t    expiration_days;
-};
+    GET_VALUE_CONVERTED( cr, cfg, expiration_days, section_name, true );
+}
 
 } // namespace user_reg
-
-#endif // USER_REG__CONFIG_H
