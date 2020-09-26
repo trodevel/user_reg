@@ -7,6 +7,7 @@
 #include "utils/log_test.h"     // log_test
 #include "utils/mutex_helper.h" // THIS_THREAD_SLEEP_SEC
 #include "config_reader/config_reader.h"    // config_reader::ConfigReader
+#include "init_config.h"        // init_config
 
 void dump_selection( const std::vector<user_manager::User> & vec, const std::string & comment )
 {
@@ -273,6 +274,8 @@ void test_06_read_config()
         cr.init( config_file );
 
         user_reg::Config config;
+
+        user_reg::init_config( & config, "config", cr );
 
         ur.init( config, & um );
 
